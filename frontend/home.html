@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>BHC Library</title>
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+  <!-- Font Awesome for Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <!-- External Stylesheet -->
+  <link rel="stylesheet" href="home.css">
+</head>
+<body>
+  <section class="hero" role="main">
+    <!-- The ::before pseudo-element will now handle the parallax background -->
+    <div class="library-logo">BHC Library</div>
+    
+    <div class="bg-overlay" aria-hidden="true">
+      <div class="glow1"></div><div class="glow2"></div><div class="glow3"></div>
+    </div>
+    
+    <div class="hero-content">
+      <!-- Floating elements -->
+      <div class="floating-element floating1">📚</div>
+      <div class="floating-element floating2">📖</div>
+      <div class="floating-element floating3">🎓</div>
+      <div class="floating-element floating4">📜</div>
+      <div class="floating-element floating5">🖋️</div>
+
+      <h1>Welcome to BHC Library</h1>
+      <p class="subtitle">Your Premier Gateway to Knowledge and Academic Excellence</p>
+      <p class="description">Explore our meticulously curated collection of physical and digital resources. From classic literature to cutting-edge research, we provide an inspiring environment to support your learning journey and foster intellectual growth.</p>
+
+      <div class="cta-buttons">
+        <a href="search.html" class="cta-button cta-primary">Explore Our Collection</a>
+        <a href="borrowed.html" class="cta-button cta-secondary">Access My Account</a>
+      </div>
+
+      <div class="scroll-indicator" onclick="scrollToPolicies()" role="button" aria-label="Scroll to Library Policies">
+        <p>View Library Policies</p>
+        <div class="arrow">↓</div>
+      </div>
+    </div>
+  </section>
+
+  <section id="policies" class="policies">
+    <div class="bg-overlay" aria-hidden="true">
+      <div class="glow1-red"></div><div class="glow2-red"></div><div class="glow3-red"></div>
+    </div>
+    <h2>Library Policies & Rules</h2>
+    <p class="intro">Please familiarize yourself with our comprehensive library policies and rules to ensure a pleasant and productive experience for all patrons. Adherence helps us maintain a respectful and conducive environment for everyone's academic pursuits.</p>
+    <div class="policy-grid">
+      <div class="policy-box">
+        <i class="fas fa-book-open icon"></i>
+        <h3>Borrowing Policy</h3>
+        <p>Students may borrow up to 5 books for 14 days. Faculty members are eligible for up to 10 books for 30 days. A valid BHC ID is required for all borrowing transactions.</p>
+      </div>
+      <div class="policy-box">
+        <i class="fas fa-redo-alt icon"></i>
+        <h3>Renewal Policy</h3>
+        <p>Books can be renewed a maximum of two times, provided the request is made before the original due date and the item has not been reserved by another patron.</p>
+      </div>
+      <div class="policy-box">
+        <i class="fas fa-coins icon"></i>
+        <h3>Overdue Fines</h3>
+        <p>A fee of ₱5.00 per day will be charged for each overdue book, up to a maximum of ₱100.00 per book. Prompt returns are highly appreciated to avoid incurring fines.</p>
+      </div>
+      <div class="policy-box">
+        <i class="fas fa-atlas icon"></i>
+        <h3>Reference Materials</h3>
+        <p>Reference books, academic journals, and special collections are strictly designated for in-library use only and are not available for circulation or removal from the premises.</p>
+      </div>
+      <div class="policy-box">
+        <i class="fas fa-volume-mute icon"></i>
+        <h3>Quiet Zones</h3>
+        <p>Designated quiet study areas require absolute silence. All mobile devices must be turned off or silenced, and phone calls should be conducted outside the library. Collaborative study rooms are available for group discussions.</p></div>
+      <div class="policy-box">
+        <i class="fas fa-laptop-code icon"></i>
+        <h3>Computer Usage</h3>
+        <p>Library computer sessions are limited to 2 hours. Patrons must sign up at the circulation desk with a valid student or faculty ID. Priority will be given to academic research and study purposes.</p></div>
+      <div class="policy-box">
+        <i class="fas fa-ban icon"></i>
+        <h3>Food & Drinks</h3>
+        <p>Only clear water in sealed, spill-proof bottles is permitted within the library's premises. Food and other beverages are strictly prohibited to prevent damage to valuable library materials and equipment.</p></div>
+      <div class="policy-box">
+        <i class="fas fa-suitcase-rolling icon"></i>
+        <h3>Personal Belongings</h3>
+        <p>Large bags, backpacks, and other personal items should be stored in the provided lockers at the library entrance. The BHC Library is not responsible for lost, damaged, or stolen personal belongings.</p></div>
+      <div class="policy-box">
+        <i class="fas fa-globe-americas icon"></i>
+        <h3>Digital Resources</h3>
+        <p>Access to our extensive collection of e-books, online journals, and research databases is available to all patrons with a valid BHC Library ID. Remote access details and guides can be found on our official website.</p></div>
+      <div class="policy-box">
+        <i class="fas fa-clock icon"></i>
+        <h3>Operating Hours</h3>
+        <p>Monday – Friday: 7:00 AM – 9:00 PM<br>Saturday: 8:00 AM – 5:00 PM<br>Sunday & Public Holidays: Closed. Please refer to our website for any special holiday schedules or revised operating hours.</p></div>
+    </div>
+  </section>
+
+  <script src="home.js"></script>
+</body>
+</html>
