@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Library - Borrowed & Bookmarked</title>
+  <link rel="stylesheet" href="borrowed.css">
+</head>
+<body>
+
+  <nav>
+    <a href="home.html">Home</a>
+    <a href="search.html">Search Books</a>
+    <a href="borrowed.html">Borrowed Books <span id="borrowedCounter" class="counter">0</span></a>
+    <a href="#">Account</a>
+  </nav>
+
+  <div class="container">
+    <h1>My Library</h1>
+
+    <div class="tabs">
+      <span class="tab active" data-target="borrowed">Borrowed</span>
+      <span class="tab" data-target="bookmarked">Bookmarked</span>
+    </div>
+
+    <table id="borrowedTable">
+      <thead>
+        <tr>
+          <th>ID Number</th>
+          <th>Name</th>
+          <th>Author</th>
+          <th>Genre</th>
+          <th>Current Date</th>
+          <th>Due Date</th>
+          <th class="status-header">Status</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <table id="bookmarkedTable">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Author</th>
+          <th>Genre</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <div class="empty-message" id="emptyMessage">
+      <span>😴</span>
+      <p>No borrowed books yet...</p>
+    </div>
+  </div>
+
+  <div id="notification" class="notification"></div>
+
+  <script src="borrowed.js"></script>
+</body>
+</html>
