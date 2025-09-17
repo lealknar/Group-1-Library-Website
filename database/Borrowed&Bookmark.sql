@@ -52,11 +52,11 @@ CREATE TABLE `books` (
 --
 
 CREATE TABLE `borrowed` (
-  `borrow_id` int(10) UNSIGNED NOT NULL,
-  `account_id` int(10) UNSIGNED NOT NULL,
-  `book_id` int(10) UNSIGNED NOT NULL,
-  `librarian_id` int(10) UNSIGNED NOT NULL,
-  `borrowed_date` date NOT NULL,
+  `ID_Number` int(10) UNSIGNED NOT NULL,
+  `Title` int(10) UNSIGNED NOT NULL,
+  `Author` int(10) UNSIGNED NOT NULL,
+  `Genre` int(10) UNSIGNED NOT NULL,
+  `Borrow_date` date NOT NULL,
   `due_date` date NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
