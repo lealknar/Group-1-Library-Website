@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Library - Borrowed & Bookmarked</title>
+  <link rel="stylesheet" href="borrowed.css">
+</head>
+<body>
+
+  <nav>
+    <!-- Hamburger Menu for Mobile -->
+    <input type="checkbox" id="menu-toggle" class="menu-toggle-checkbox">
+    <label for="menu-toggle" class="menu-toggle-label">
+        <span></span>
+        <span></span>
+        <span></span>
+    </label>
+    
+    <div class="nav-links">
+        <a href="home.html">Home</a>
+        <a href="search.html">Search Books</a>
+        <a href="borrowed.html">Borrowed Books <span id="borrowedCounter" class="counter">0</span></a>
+        <a href="account.html">Account</a>
+    </div>
+  </nav>
+
+  <div class="container">
+    <h1>My Library</h1>
+
+    <div class="tabs">
+      <button class="tab active" data-target="borrowed">Borrowed</button>
+      <button class="tab" data-target="bookmarked">Bookmarked</button>
+      <!-- NEW: Added Returned Tab -->
+      <button class="tab" data-target="returned">Returned</button>
+    </div>
+
+    <!-- Borrowed Books Table -->
+    <table id="borrowedTable">
+      <thead>
+        <tr>
+          <th>Book Title</th>
+          <th>Author</th>
+          <th>Genre</th>
+          <th>Student ID</th>
+          <th>Borrow Date</th>
+          <th>Due Date</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <!-- Bookmarked Books Table -->
+    <table id="bookmarkedTable">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Author</th>
+          <th>Genre</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <!-- NEW: Returned Books Table -->
+    <table id="returnedTable">
+      <thead>
+        <tr>
+          <th>Book Title</th>
+          <th>Author</th>
+          <th>Student ID</th>
+          <th>Borrow Date</th>
+          <th>Return Date</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <div class="empty-message" id="emptyMessage">
+      <span>😴</span>
+      <p>No borrowed books yet...</p>
+    </div>
+  </div>
+
+  <div id="notification" class="notification"></div>
+
+  <script src="borrowed.js"></script>
+</body>
+</html>

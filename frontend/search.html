@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Library System - Search</title>
+  <link rel="stylesheet" href="search.css">
+</head>
+<body>
+
+<!-- Navigation Bar -->
+<nav>
+  <div class="nav-links">
+      <a href="home.html">Home</a>
+      <a href="search.html">Search Books</a>
+      <a href="borrowed.html">Borrowed Books</a>
+      <a href="account.html">Account</a>
+  </div>
+</nav>
+
+<!-- Main Content Container -->
+<div class="container">
+  
+  <!-- Left-side Filter Panel -->
+  <aside class="filter-box">
+    <h3>Filters</h3>
+    <form id="filterForm">
+        <label for="sort">Sort by</label>
+        <select id="sort">
+          <option value="Relevance">Relevance</option>
+          <option value="Title">Title</option>
+          <option value="Author">Author</option>
+          <option value="Most Borrowed Books">Most Borrowed Books</option>
+          <option value="Newest-Oldest">Newest-Oldest</option>
+          <option value="Oldest-Newest">Oldest-Newest</option>
+        </select>
+        
+        <label for="genre">Genre</label>
+        <select id="genre">
+          <option value="All">All</option>
+          <option value="Comedy">Comedy</option>
+          <option value="Drama">Drama</option>
+          <option value="Fantasy">Fantasy</option>
+          <option value="Horror">Horror</option>
+          <option value="Fiction">Fiction</option>
+          <option value="Sci-Fi">Sci-Fi</option>
+        </select>
+        
+        <label for="date">Publication Year</label>
+        <div class="date-inputs">
+            <input type="number" id="dateFrom" placeholder="From" min="1000" max="2099">
+            <input type="number" id="dateTo" placeholder="To" min="1000" max="2099">
+        </div>
+        
+        <div class="filter-actions">
+            <button type="button" id="applyFilter">Apply</button>
+            <button type="button" id="clearFilter" class="clear-btn">Clear</button>
+        </div>
+    </form>
+  </aside>
+
+  <!-- Central Content Area -->
+  <main class="content">
+    <div class="content-header">
+        <h1>Bataan Heroes College Library</h1>
+        <p>Search and manage books in the library</p>
+    </div>
+    
+    <div class="search-box">
+      <input type="text" id="searchInput" placeholder="Search by Title, Author, or Genre...">
+      <div class="header-buttons">
+          <button class="add-books-btn">+ Add Books</button>
+          <button class="remove-books-btn" id="toggleRemove">🗑 Remove</button>
+      </div>
+    </div>
+    
+    <div id="noBooks" class="no-books">🔍<p>Search for a book to begin</p></div>
+    
+    <div class="table-container">
+        <table id="bookTable" style="display:none;">
+          <thead>
+            <tr>
+              <th>Title</th>
+              <th>Author</th>
+              <th class="quantity">Qty</th>
+              <th>Genre</th>
+              <th class="borrowed" style="display:none;">Borrowed</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Book rows will be dynamically inserted here by JavaScript -->
+          </tbody>
+        </table>
+    </div>
+  </main>
+</div>
+
+<!-- Pop-up Notification -->
+<div id="notification" class="notification"></div>
+
+<!-- ====================================================== -->
+<!--                      MODALS                            -->
+<!-- ====================================================== -->
+
+<!-- Add Book Modal -->
+<div id="addBookModal" class="modal" aria-hidden="true">
+  <div class="modal-inner">
+    <h3>Add a New Book</h3>
+    <form id="addBookForm">
+        <label for="newBookName">Book Title</label>
+        <input type="text" id="newBookName" required placeholder="e.g., The Great Gatsby">
+        
+        <label for="newBookAuthor">Author</label>
+        <input type="text" id="newBookAuthor" required placeholder="e.g., F. Scott Fitzgerald">
+        
+        <label for="newBookQuantity">Quantity</label>
+        <input type="number" id="newBookQuantity" required value="1" min="1">
+
+        <label for="newBookYear">Publication Year</label>
+        <input type="number" id="newBookYear" placeholder="e.g., 1925" min="1000" max="2099">
+        
+        <label for="newBookGenre">Genre</label>
+        <input type="text" id="newBookGenre" placeholder="e.g., Fiction">
+        
+        <label for="librarianNameAdd">Librarian Name</label>
+        <input type="text" id="librarianNameAdd" required placeholder="Enter your name">
+    </form>
+    <div class="modal-actions">
+      <button type="button" id="newBookCancel" class="modal-cancel">Cancel</button>
+      <button type="button" id="newBookSave" class="modal-save">Save Book</button>
+    </div>
+  </div>
+</div>
+
+<!-- Borrow Book Modal -->
+<div id="borrowBookModal" class="modal" aria-hidden="true">
+  <div class="modal-inner">
+    <h3>Borrow Book</h3>
+    <form id="borrowBookForm">
+      <label>Book Title</label>
+      <input type="text" id="borrowName" readonly>
+      <label>Author</label>
+      <input type="text" id="borrowAuthor" readonly>
+      <label>Genre</label>
+      <input type="text" id="borrowGenre" readonly>
+      <label for="borrowId">Student ID</label>
+      <input type="text" id="borrowId" required placeholder="Enter your Student ID">
+      <label>Date Borrowed</label>
+      <input type="date" id="borrowCurrent" readonly>
+      <label for="borrowDue">Due Date</label>
+      <input type="date" id="borrowDue" required>
+      
+      <label for="librarianNameBorrow">Processed By (Librarian)</label>
+      <input type="text" id="librarianNameBorrow" required placeholder="Enter your name">
+    </form>
+    <div class="modal-actions">
+      <button type="button" id="borrowCancel" class="modal-cancel">Cancel</button>
+      <button type="button" id="borrowSave" class="modal-save">Confirm Borrow</button>
+    </div>
+  </div>
+</div>
+
+<!-- Validation Modal -->
+<div id="validationModal" class="validation-modal">
+    <div class="validation-modal-inner">
+        <span class="icon">⚠️</span>
+        <h3 id="validationTitle">Validation Error</h3>
+        <p id="validationMessage">Please fill out all required fields.</p>
+        <button id="validationOk" class="validation-ok-btn">OK</button>
+    </div>
+</div>
+
+<script src="search.js"></script>
+
+</body>
+</html>
