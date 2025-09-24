@@ -6,10 +6,10 @@ Each member of the group worked on different parts of the system, including the 
 
 
 
-                                       Mandocdoc VInce: Backend
-                                       Grande Franze: Backend
-                                       Aarasata Christian: Database Admin
-                                       Evangalista Karl: QA
+                                       Mandocdoc Vince: Backend
+                                       Grande Franz: Backend
+                                       Sarasata Christian: Database Admin
+                                       Evangelista Karl: QA
                                        Delas Alas Mark Angelo: Frontend 
 
 
