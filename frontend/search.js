@@ -1,278 +1,496 @@
+/* ========= All JS runs after DOM is ready ========= */
 document.addEventListener('DOMContentLoaded', () => {
 
-    /* --- DOM Element References --- */
-    const tbody = document.querySelector('#bookTable tbody');
-    const bookTableElement = document.getElementById('bookTable');
-    const noBooks = document.getElementById('noBooks');
-    const notification = document.getElementById('notification');
-    const searchInput = document.getElementById('searchInput');
-    const applyBtn = document.getElementById('applyFilter');
-    const clearBtn = document.getElementById('clearFilter');
-    const sortSelect = document.getElementById('sort');
-    const genreSelect = document.getElementById('genre');
-    const dateFromInput = document.getElementById('dateFrom');
-    const dateToInput = document.getElementById('dateTo');
-    const addBooksBtn = document.querySelector('.add-books-btn');
-    const addBookModal = document.getElementById('addBookModal');
-    const newBookSave = document.getElementById('newBookSave');
-    const newBookCancel = document.getElementById('newBookCancel');
-    const borrowModal = document.getElementById('borrowBookModal');
-    const borrowSave = document.getElementById('borrowSave');
-    const borrowCancel = document.getElementById('borrowCancel');
-    const toggleRemove = document.getElementById('toggleRemove');
-    const validationModal = document.getElementById('validationModal');
-    const validationOk = document.getElementById('validationOk');
+  /* --- DOM references --- */
+  const tbody = document.querySelector('#bookTable tbody');
+  const bookTableElement = document.getElementById('bookTable');
+  const sortSelect = document.getElementById('sort');
+  const applyBtn = document.getElementById('applyFilter');
+  const clearBtn = document.getElementById('clearFilter');
+  const searchInput = document.getElementById('searchInput');
+  const noBooks = document.getElementById('noBooks');
+  const genreSelect = document.getElementById('genre');
+  const dateFromInput = document.getElementById('dateFrom');
+  const dateToInput = document.getElementById('dateTo');
+  const notification = document.getElementById('notification');
+  const toggleRemove = document.getElementById('toggleRemove');
 
-    const BOOK_MANAGER_API = '../backend/book_manager.php';
-    const ADD_BOOK_API = '../backend/add_book.php';
+  const addBooksBtn = document.querySelector('.add-books-btn');
+  const addBookModal = document.getElementById('addBookModal');
+  const newBookCancel = document.getElementById('newBookCancel');
+  const newBookSave = document.getElementById('newBookSave');
 
-    let currentBorrowRow = null;
-    let removeMode = false;
+  const borrowModal = document.getElementById('borrowBookModal');
+  const borrowId = document.getElementById('borrowId');
+  const borrowName = document.getElementById('borrowName');
+  const borrowAuthor = document.getElementById('borrowAuthor');
+  const borrowGenre = document.getElementById('borrowGenre');
+  const borrowCurrent = document.getElementById('borrowCurrent');
+  const borrowDue = document.getElementById('borrowDue');
+  const borrowCancel = document.getElementById('borrowCancel');
+  const borrowSave = document.getElementById('borrowSave');
 
-    /* --- Helper Functions --- */
-    function showNotification(msg, isError = false) {
-        notification.innerText = msg;
-        notification.style.backgroundColor = isError ? '#B22222' : '#28a745';
-        notification.classList.add('show');
-        setTimeout(() => notification.classList.remove('show'), 3000);
+  // Professional validation modal elements
+  const validationModal = document.getElementById('validationModal');
+  const validationTitle = document.getElementById('validationTitle');
+  const validationMessage = document.getElementById('validationMessage');
+  const validationOk = document.getElementById('validationOk');
+
+  // New: Borrowed Books notification elements
+  const borrowedBooksLink = document.getElementById('borrowedBooksLink');
+  const borrowedNotificationBadge = document.getElementById('borrowedNotificationBadge');
+
+  const STORAGE_KEY = 'borrowedBooks'; // consistent storage key
+
+  /* --- helpers --- */
+  function showNotification(msg){
+    notification.innerText = msg;
+    notification.classList.add('show');
+    setTimeout(()=> notification.classList.remove('show'), 2200);
+  }
+
+  // Professional validation notification
+  function showValidationModal(title, message, focusElement = null) {
+    validationTitle.textContent = title;
+    validationMessage.textContent = message;
+    validationModal.style.display = 'flex';
+
+    // Store focus element for after modal closes
+    validationModal.focusElement = focusElement;
+  }
+
+  // New: Show borrowed books header notification
+  function showBorrowedNotification(){
+    borrowedNotificationBadge.classList.add('show');
+    // Hide after 3 seconds
+    setTimeout(() => {
+      borrowedNotificationBadge.classList.remove('show');
+    }, 3000);
+  }
+
+  function loadList(){ try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; } catch(e){ return []; } }
+  function saveList(list){ localStorage.setItem(STORAGE_KEY, JSON.stringify(list)); }
+
+  function escapeHtml(text) {
+    return String(text).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  /* ========= Filters / Search / State logic ========= */
+  function applyFilters(){
+    const searchVal = searchInput.value.toLowerCase();
+    const genreVal = genreSelect.value.toLowerCase();
+    const dateFrom = parseInt(dateFromInput.value) || 1800;
+    const dateTo = parseInt(dateToInput.value) || 2025;
+
+    const rows = Array.from(tbody.getElementsByTagName("tr"));
+    let visibleCount = 0;
+
+    rows.forEach(row => {
+      const cols = row.getElementsByTagName("td");
+      const title = (cols[0] && cols[0].innerText) ? cols[0].innerText.toLowerCase() : '';
+      const author = (cols[1] && cols[1].innerText) ? cols[1].innerText.toLowerCase() : '';
+      const genre = (cols[3] && cols[3].innerText) ? cols[3].innerText.toLowerCase() : '';
+      const yearMatch = cols[0] && cols[0].innerText.match(/\((\d{4})\)/);
+      const year = yearMatch ? parseInt(yearMatch[1]) : 0;
+
+      const match = (title.includes(searchVal) || author.includes(searchVal)) &&
+                    (genreVal === "all" || genre.includes(genreVal)) &&
+                    (year >= dateFrom && year <= dateTo);
+
+      row.style.display = match ? "" : "none";
+      if(match){ visibleCount++; row.classList.add("fade-in-up"); }
+    });
+
+    noBooks.style.display = visibleCount === 0 ? "" : "none";
+
+    const sortVal = sortSelect.value;
+    if (sortVal === "Most Borrowed Books") {
+      document.querySelectorAll("th.borrowed, td.borrowed").forEach(el => el.style.display = "");
+      rows.sort((a,b) => parseInt(b.cells[4].innerText || 0) - parseInt(a.cells[4].innerText || 0));
+    } else {
+      document.querySelectorAll("th.borrowed, td.borrowed").forEach(el => el.style.display = "none");
+      if(sortVal === "Title") rows.sort((a,b) => a.cells[0].innerText.localeCompare(b.cells[0].innerText));
+      else if(sortVal === "Author") rows.sort((a,b) => a.cells[1].innerText.localeCompare(b.cells[1].innerText));
+      else if(sortVal === "Newest-Oldest") rows.sort((a,b) => parseInt(b.cells[0].innerText.match(/\((\d{4})\)/)?.[1] || 0) - parseInt(a.cells[0].innerText.match(/\((\d{4})\)/)?.[1] || 0));
+      else if(sortVal === "Oldest-Newest") rows.sort((a,b) => parseInt(a.cells[0].innerText.match(/\((\d{4})\)/)?.[1] || 0) - parseInt(b.cells[0].innerText.match(/\((\d{4})\)/)?.[1] || 0));
+    }
+    rows.forEach(r => tbody.appendChild(r));
+  }
+
+  function clearFilters(){
+    searchInput.value = "";
+    genreSelect.value = "All";
+    sortSelect.value = "Relevance";
+    dateFromInput.value = "";
+    dateToInput.value = "";
+    bookTableElement.classList.add("fade-out");
+    setTimeout(()=> {
+      bookTableElement.style.display = "none";
+      noBooks.style.display = "";
+      bookTableElement.classList.remove("fade-out");
+    }, 600);
+  }
+
+  applyBtn.addEventListener('click', () => {
+      bookTableElement.style.display = '';
+      bookTableElement.classList.remove("fade-out");
+      bookTableElement.style.opacity = "1";
+      noBooks.style.display = 'none';
+      applyFilters();
+  });
+
+  clearBtn.addEventListener('click', clearFilters);
+
+  searchInput.addEventListener('input', ()=>{
+    if(searchInput.value.trim() === ""){
+      bookTableElement.style.display = 'none';
+      noBooks.style.display = '';
+    } else {
+      bookTableElement.style.display = '';
+      bookTableElement.style.opacity = "1";
+      noBooks.style.display = 'none';
+      applyFilters();
+    }
+  });
+
+  // Enforce 4-digit year in date filters
+  function enforceFourDigitYear(event) {
+      if (event.target.value.length > 4) {
+          event.target.value = event.target.value.slice(0, 4);
+      }
+  }
+  dateFromInput.addEventListener('input', enforceFourDigitYear);
+  dateToInput.addEventListener('input', enforceFourDigitYear);
+
+  window.addEventListener("beforeunload", () => {
+    const state = {
+      search: searchInput.value,
+      sort: sortSelect.value,
+      genre: genreSelect.value,
+      dateFrom: dateFromInput.value,
+      dateTo: dateToInput.value,
+      hasResults: bookTableElement.style.display !== "none"
+    };
+    localStorage.setItem("searchPageState", JSON.stringify(state));
+  });
+
+  /* ========= Borrow / Bookmark / Remove / Modal logic ========= */
+
+  function updateAddButtonState(row){
+    if(!row) return;
+    const qtyCell = row.querySelector('.quantity');
+    const addBtn = row.querySelector('.add-btn');
+    const qty = qtyCell ? (parseInt(qtyCell.innerText) || 0) : 0;
+    if(addBtn){
+      addBtn.disabled = qty <= 0;
+      addBtn.title = addBtn.disabled ? 'No copies available' : '';
+    }
+  }
+
+  function addBookRow(row, type='borrowed', dates){
+    if(!row) return false;
+    const cells = row.getElementsByTagName('td');
+    const name = (cells[0] && cells[0].innerText.trim()) || '';
+    const author = (cells[1] && cells[1].innerText.trim()) || '';
+    const genre = (cells[3] && cells[3].innerText.trim()) || '';
+    if(!name) return false;
+
+    const list = loadList();
+
+    if(type==='borrowed'){
+      const idNumber = (dates && dates.idNumber) ? String(dates.idNumber).trim() : '';
+
+      const exists = list.some(b =>
+          b.type === 'borrowed' &&
+          b.idNumber === idNumber &&
+          b.name === name &&
+          b.author === author
+      );
+
+      if (exists) {
+          showNotification(`⚠️ The student already borrowed this book.`);
+          return false;
+      }
+
+      const qtyCell = row.querySelector('.quantity');
+      let quantity = parseInt(qtyCell.innerText) || 0;
+      if(quantity <= 0){
+        showNotification(`❌ No copies left for "${name}"`);
+        return false;
+      }
+
+      quantity--;
+      qtyCell.innerText = quantity;
+
+      const borrowedCell = row.querySelector('td.borrowed');
+      if(borrowedCell){
+        const current = parseInt(borrowedCell.innerText) || 0;
+        borrowedCell.innerText = current + 1;
+      }
+
+      const currentDate = (dates && dates.currentDate) ? dates.currentDate :
+                          (new Date().toISOString().split('T')[0]);
+      const dueDate = (dates && dates.dueDate) ? dates.dueDate : '';
+
+      list.push({
+        name,
+        author,
+        genre,
+        type: 'borrowed',
+        currentDate,
+        dueDate,
+        idNumber: idNumber,
+        addedAt: new Date().toISOString()
+      });
+      saveList(list);
+      showNotification(`✅ Borrowed "${name}"`);
+      showBorrowedNotification();
+      updateAddButtonState(row);
+      return true;
     }
 
-    function showValidationModal(title, message) {
-        document.getElementById('validationTitle').textContent = title;
-        document.getElementById('validationMessage').textContent = message;
-        validationModal.style.display = 'flex';
+    if(type==='bookmarked' || type==='fav'){
+      const exists = list.some(b => b.name===name && b.author===author && b.type==='bookmarked');
+      if(exists){
+        showNotification(`⚠️ "${name}" already in bookmarks`);
+        return false;
+      }
+      list.push({ name, author, genre, type: 'bookmarked', addedAt: new Date().toISOString() });
+      saveList(list);
+      showNotification(`🔖 Added "${name}" to bookmarks`);
+      return true;
     }
 
-    function escapeHtml(text) {
-        if (text === null || text === undefined) return '';
-        return String(text).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#x27;'}[c]));
+    return false;
+  }
+
+  let currentBorrowRow = null;
+
+  tbody.addEventListener('click', (e) => {
+    const addBtn = e.target.closest('.add-btn');
+    if(addBtn){
+      if(addBtn.disabled) return;
+
+      const row = addBtn.closest('tr');
+      if(!row) return;
+
+      currentBorrowRow = row;
+      const cells = row.getElementsByTagName('td');
+
+      const qtyCell = row.querySelector('.quantity');
+      const qty = qtyCell ? (parseInt(qtyCell.innerText) || 0) : 0;
+      if(qty <= 0){
+        showNotification(`❌ No copies left for this book`);
+        currentBorrowRow = null;
+        return;
+      }
+
+      borrowId.value = "";
+      borrowName.value = cells[0].innerText.trim();
+      borrowAuthor.value = cells[1].innerText.trim();
+      borrowGenre.value = cells[3].innerText.trim();
+
+      // Set min/max for due date picker to prevent invalid years
+      const today = new Date();
+      const todayString = today.toISOString().split('T')[0];
+
+      // Set max due date 5 years from now
+      const maxDate = new Date();
+      maxDate.setFullYear(maxDate.getFullYear() + 5);
+      const maxDateString = maxDate.toISOString().split('T')[0];
+
+      borrowCurrent.value = todayString;
+      borrowDue.value = "";
+      borrowDue.min = todayString; // Prevent selecting past dates
+      borrowDue.max = maxDateString; // Prevent selecting dates far in the future
+
+      borrowModal.style.display = 'flex';
+      return;
     }
 
-    function renderBooks(books = []) {
-        tbody.innerHTML = '';
-        if (books.length === 0) {
-            bookTableElement.style.display = 'none';
-            noBooks.style.display = 'block';
-            return;
-        }
-
-        bookTableElement.style.display = '';
-        noBooks.style.display = 'none';
-        
-        const showBorrowed = sortSelect.value === "Most Borrowed Books";
-        document.querySelectorAll("th.borrowed, td.borrowed").forEach(el => el.style.display = showBorrowed ? "" : "none");
-
-        books.forEach(book => {
-            const row = document.createElement('tr');
-            row.setAttribute('data-book-id', book.book_id);
-
-            row.innerHTML = `
-                <td>${escapeHtml(book.name_of_book)}</td>
-                <td>${escapeHtml(book.author)}</td>
-                <td class="quantity">${book.quantity}</td>
-                <td>${escapeHtml(book.genre)}</td>
-                <td class="borrowed" style="display:${showBorrowed ? '' : 'none'};">${book.borrowed_count || 0}</td>
-                <td class="book-actions">
-                    <button class="add-btn" ${book.quantity <= 0 ? 'disabled' : ''} title="Borrow this book">Borrow</button>
-                    <button class="bookmark-btn" data-book-id="${book.book_id}" title="Bookmark this book">🔖</button>
-                    ${removeMode ? `<button class="remove-row-btn" data-book-id="${book.book_id}">Remove</button>` : ''}
-                </td>
-            `;
-            tbody.appendChild(row);
-        });
+    const favBtn = e.target.closest('.fav-btn');
+    if(favBtn){
+      const row = favBtn.closest('tr');
+      addBookRow(row,'bookmarked');
+      return;
     }
 
-    async function fetchAndRenderBooks() {
-        const params = new URLSearchParams({
-            action: 'get_books',
-            search: searchInput.value,
-            genre: genreSelect.value,
-            sort: sortSelect.value,
-            dateFrom: dateFromInput.value,
-            dateTo: dateToInput.value,
-        });
+    const removeBtn = e.target.closest('.remove-row-btn');
+    if(removeBtn){
+      const row = removeBtn.closest('tr');
+      const title = (row && row.cells[0] && row.cells[0].innerText) || 'book';
+      row.remove();
+      showNotification(`🗑️ Removed "${title}"`);
+      if(tbody.querySelectorAll('tr').length === 0){
+        bookTableElement.style.display = 'none';
+        noBooks.style.display = '';
+      }
+      return;
+    }
+  });
 
-        try {
-            const response = await fetch(`${BOOK_MANAGER_API}?${params.toString()}`);
-            if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
-            
-            const data = await response.json();
-            if (data.success) {
-                renderBooks(data.books);
-            } else {
-                showNotification(data.message || 'Could not fetch books.', true);
-            }
-        } catch (error) {
-            console.error('Fetch error:', error);
-            showNotification('An error occurred while fetching books from the server.', true);
+  let removeMode = false;
+  function setRemoveButtons(on){
+    document.querySelectorAll('#bookTable tbody tr').forEach(row=>{
+      const actions = row.querySelector('.book-actions');
+      if(!actions) return;
+      let existing = actions.querySelector('.remove-row-btn');
+      if(on){
+        if(!existing){
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'remove-row-btn';
+          btn.innerText = 'Remove';
+          actions.appendChild(btn);
         }
+      } else {
+        if(existing) existing.remove();
+      }
+    });
+    if(toggleRemove) toggleRemove.style.opacity = on ? '1' : '0.85';
+  }
+  if(toggleRemove){
+    toggleRemove.addEventListener('click', ()=>{
+      removeMode = !removeMode;
+      setRemoveButtons(removeMode);
+    });
+  }
+
+  borrowCancel.addEventListener('click', () => {
+    borrowModal.style.display = 'none';
+    currentBorrowRow = null;
+  });
+
+  borrowSave.addEventListener('click', () => {
+    if(!currentBorrowRow) return;
+
+    const idValue = borrowId.value.trim();
+    const dueDateValue = borrowDue.value.trim();
+
+    if (!idValue && !dueDateValue) {
+      showValidationModal('ID Number & Due Date Required', 'Please enter your ID number and select a due date.', borrowId);
+      return;
+    }
+    if (!idValue) {
+      showValidationModal('ID Number Required', 'Please enter your ID number to proceed.', borrowId);
+      return;
+    }
+    if (!dueDateValue) {
+      showValidationModal('Due Date Required', 'Please select a due date.', borrowDue);
+      return;
     }
 
-    /* --- NEW BOOKMARK FUNCTION --- */
-    async function handleBookmark(bookId, buttonElement) {
-        // NOTE: In a real application, you would get the user ID from a server-side session.
-        // We will hardcode a user ID of 1 for this demonstration.
-        const userId = 1; 
+    const dates = {
+      currentDate: borrowCurrent.value || new Date().toISOString().split('T')[0],
+      dueDate: dueDateValue,
+      idNumber: idValue
+    };
 
-        try {
-            const response = await fetch(BOOK_MANAGER_API, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({
-                    action: 'bookmark_book',
-                    book_id: bookId,
-                    user_id: userId
-                })
-            });
+    const ok = addBookRow(currentBorrowRow, 'borrowed', dates);
 
-            const data = await response.json();
-            showNotification(data.message, !data.success);
+    if(ok){
+      borrowModal.style.display = 'none';
+      currentBorrowRow = null;
+    }
+  });
 
-        } catch (error) {
-            console.error('Bookmark error:', error);
-            showNotification('Could not connect to the server to update bookmark.', true);
-        }
+  validationOk.addEventListener('click', () => {
+    validationModal.style.display = 'none';
+    if (validationModal.focusElement) {
+      validationModal.focusElement.focus();
+      validationModal.focusElement = null;
+    }
+  });
+
+  window.addEventListener('click', (e) => {
+    if (e.target === validationModal) {
+      validationModal.style.display = 'none';
+      if (validationModal.focusElement) {
+        validationModal.focusElement.focus();
+        validationModal.focusElement = null;
+      }
+    }
+    if(e.target === borrowModal){
+      borrowModal.style.display = 'none';
+      currentBorrowRow = null;
+    }
+    if(e.target === addBookModal){
+      addBookModal.style.display = 'none';
+    }
+  });
+
+  addBooksBtn && addBooksBtn.addEventListener('click', () => addBookModal.style.display = 'flex');
+  newBookCancel && newBookCancel.addEventListener('click', () => addBookModal.style.display = 'none');
+
+  newBookSave && newBookSave.addEventListener('click', () => {
+    const name = document.getElementById('newBookName').value.trim();
+    const author = document.getElementById('newBookAuthor').value.trim();
+    const qtyVal = document.getElementById('newBookQuantity').value;
+    const quantity = (qtyVal === '') ? 1 : parseInt(qtyVal);
+    const genre = document.getElementById('newBookGenre').value.trim() || 'Unknown';
+
+    if(!name || !author || !quantity){
+      alert('Please fill in Name, Author and Quantity.');
+      return;
     }
 
-    /* --- Event Listeners --- */
-    addBooksBtn.addEventListener('click', () => {
-        document.getElementById('addBookForm').reset();
-        addBookModal.style.display = 'flex';
-    });
+    const newRow = document.createElement('tr');
+    newRow.innerHTML = `
+      <td>${escapeHtml(name)}</td>
+      <td>${escapeHtml(author)}</td>
+      <td class="quantity">${quantity}</td>
+      <td>${escapeHtml(genre)}</td>
+      <td class="borrowed" style="display:none;">0</td>
+      <td class="book-actions">
+        <button class="add-btn">Add</button>
+        <button class="fav-btn">🔖</button>
+      </td>
+    `;
+    tbody.appendChild(newRow);
 
-    newBookSave.addEventListener('click', async () => {
-        const bookData = {
-            name: document.getElementById('newBookName').value.trim(),
-            author: document.getElementById('newBookAuthor').value.trim(),
-            quantity: parseInt(document.getElementById('newBookQuantity').value, 10),
-            publication_year: document.getElementById('newBookYear').value.trim(),
-            genre: document.getElementById('newBookGenre').value.trim() || 'Unknown',
-            librarian_name: document.getElementById('librarianNameAdd').value.trim()
-        };
+    if(removeMode){
+      const actions = newRow.querySelector('.book-actions');
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'remove-row-btn';
+      btn.innerText = 'Remove';
+      actions.appendChild(btn);
+    }
 
-        if (!bookData.name || !bookData.author || !bookData.quantity || bookData.quantity <= 0 || !bookData.librarian_name) {
-            showValidationModal('Missing Information', 'Please fill in all required fields, including Librarian Name.');
-            return;
-        }
+    updateAddButtonState(newRow);
+    bookTableElement.style.display = '';
+    noBooks.style.display = 'none';
+    showNotification(`✅ "${name}" added to the list`);
+    document.getElementById('newBookName').value = '';
+    document.getElementById('newBookAuthor').value = '';
+    document.getElementById('newBookQuantity').value = 1;
+    document.getElementById('newBookGenre').value = '';
+    addBookModal.style.display = 'none';
 
-        try {
-            // Assumes your add_book.php is ready to receive librarian_name
-            const response = await fetch(ADD_BOOK_API, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(bookData)
-            });
-            const result = await response.json();
+    if(searchInput.value.trim() !== '' || sortSelect.value !== 'Relevance' || genreSelect.value !== 'All') {
+      applyFilters();
+    }
+  });
 
-            if (result.success) {
-                showNotification(result.message);
-                addBookModal.style.display = 'none';
-                fetchAndRenderBooks();
-            } else {
-                showValidationModal('Error Saving Book', result.message || 'An unknown error occurred.');
-            }
-        } catch (error) {
-            showValidationModal('Network Error', 'Could not connect to the server to add the book.');
-        }
-    });
+  /* Initialize */
+  document.querySelectorAll('#bookTable tbody tr').forEach(row => updateAddButtonState(row));
 
-    toggleRemove.addEventListener('click', () => {
-        removeMode = !removeMode;
-        toggleRemove.style.opacity = removeMode ? '1' : '0.85';
-        fetchAndRenderBooks();
-    });
+  (function restoreState(){
+    const state = JSON.parse(localStorage.getItem("searchPageState") || "{}");
+    searchInput.value = state.search || "";
+    sortSelect.value = state.sort || "Relevance";
+    genreSelect.value = state.genre || "All";
+    dateFromInput.value = state.dateFrom || "";
+    dateToInput.value = state.dateTo || "";
 
-    applyBtn.addEventListener('click', fetchAndRenderBooks);
-    searchInput.addEventListener('input', fetchAndRenderBooks);
-    clearBtn.addEventListener('click', () => {
-        document.getElementById('filterForm').reset();
-        searchInput.value = '';
-        fetchAndRenderBooks();
-    });
+    if(state.hasResults && (searchInput.value || state.genre !== "All" || state.sort !== "Relevance" || state.dateFrom || state.dateTo)){
+      bookTableElement.style.display = '';
+      noBooks.style.display = 'none';
+      applyFilters();
+    } else {
+      noBooks.style.display = "";
+      bookTableElement.style.display = "none";
+    }
+  })();
 
-    tbody.addEventListener('click', async (e) => {
-        const bookRow = e.target.closest('tr');
-        if (!bookRow) return;
-        const bookId = bookRow.dataset.bookId;
-
-        if (e.target.matches('.add-btn')) {
-            currentBorrowRow = bookRow;
-            document.getElementById('borrowName').value = bookRow.cells[0].innerText;
-            document.getElementById('borrowAuthor').value = bookRow.cells[1].innerText;
-            document.getElementById('borrowGenre').value = bookRow.cells[3].innerText;
-            document.getElementById('borrowCurrent').value = new Date().toISOString().split('T')[0];
-            document.getElementById('borrowDue').value = '';
-            document.getElementById('borrowId').value = '';
-            document.getElementById('librarianNameBorrow').value = '';
-            borrowModal.style.display = 'flex';
-        }
-
-        if (e.target.matches('.bookmark-btn')) {
-            handleBookmark(bookId, e.target);
-        }
-
-        if (e.target.matches('.remove-row-btn')) {
-            if (confirm(`Are you sure you want to permanently delete "${bookRow.cells[0].innerText}"?`)) {
-                 try {
-                    const response = await fetch(BOOK_MANAGER_API, {
-                        method: 'POST',
-                        headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({ action: 'remove_book', book_id: bookId })
-                    });
-                    const data = await response.json();
-                    showNotification(data.message, !data.success);
-                    if (data.success) fetchAndRenderBooks();
-                } catch (error) {
-                    showNotification('Error removing book.', true);
-                }
-            }
-        }
-    });
-    
-    borrowSave.addEventListener('click', async () => {
-        if (!currentBorrowRow) return;
-        
-        const borrowDetails = {
-            action: 'borrow_book',
-            book_id: currentBorrowRow.dataset.bookId,
-            account_id: document.getElementById('borrowId').value.trim(),
-            due_date: document.getElementById('borrowDue').value.trim(),
-            librarian_name: document.getElementById('librarianNameBorrow').value.trim()
-        };
-
-        if (!borrowDetails.account_id || !borrowDetails.due_date || !borrowDetails.librarian_name) {
-            showValidationModal('Missing Information', 'Please provide Student ID, due date, and librarian name.');
-            return;
-        }
-        
-        try {
-            const response = await fetch(BOOK_MANAGER_API, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(borrowDetails)
-            });
-            const data = await response.json();
-            if (data.success) {
-                showNotification(data.message);
-                borrowModal.style.display = 'none';
-                fetchAndRenderBooks();
-            } else {
-                showValidationModal('Borrow Failed', data.message);
-            }
-        } catch (error) {
-            showValidationModal('Network Error', 'Could not process the borrow request.');
-        }
-    });
-
-    /* --- Modal Closing Logic --- */
-    newBookCancel.addEventListener('click', () => addBookModal.style.display = 'none');
-    borrowCancel.addEventListener('click', () => borrowModal.style.display = 'none');
-    validationOk.addEventListener('click', () => validationModal.style.display = 'none');
-    window.addEventListener('click', (e) => {
-        if (e.target === addBookModal) addBookModal.style.display = 'none';
-        if (e.target === borrowModal) borrowModal.style.display = 'none';
-        if (e.target === validationModal) validationModal.style.display = 'none';
-    });
-
-    fetchAndRenderBooks();
-});
+}); // end DOMContentLoaded
